@@ -1,38 +1,59 @@
-import { DashboardHeader } from "@/components/finance/dashboard-header";
+"use client";
+
+import { PageHeader } from "@/components/finance/page-header";
 import { SummaryCards } from "@/components/finance/summary-cards";
 import { BudgetChart } from "@/components/finance/budget-chart";
 import { RecentTransactions } from "@/components/finance/recent-transactions";
-import { AddTransactionButton } from "@/components/finance/add-transaction-button";
+import { Sidebar, MobileNavigation } from "@/components/finance/sidebar";
+import { useBudgets } from "@/hooks/useBudget";
+import { useTransactions } from "@/hooks/useTransaction";
+import { useUserProfile } from "@/hooks/useProfile";
 
 export default function FinanceDashboard() {
+  const { data: response, isLoading, error } = useBudgets();
+  const { data: transactionResponse, isLoading: isLoadingTx } =
+    useTransactions();
+  const budgetDataArray = response || [];
+  const transactionDataArray = transactionResponse || [];
+  const { data: userProfile } = useUserProfile();
+  const name = userProfile?.name || "User";
+  const email = userProfile?.email || "user@example.com";
+
+  if (isLoading) return <div>Generating chart...</div>;
+  if (error) return <div>An error occurred while loading data</div>;
+
   return (
-    <main className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto px-4 py-6 md:px-6 md:py-8 pb-24 sm:pb-8">
-        <DashboardHeader />
+    <div className="min-h-screen bg-background">
+      {/* Sidebar */}
+      <Sidebar name={name} email={email} />
 
-        {/* Summary Cards */}
-        <section className="mb-6">
-          <SummaryCards />
-        </section>
+      {/* Main Content */}
+      <main className="md:pl-52">
+        <div className="max-w-6xl mx-auto px-4 py-6 md:px-6 md:py-8 pb-24 md:pb-8">
+          <PageHeader name={name} />
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Budget Chart */}
-          <section>
-            <BudgetChart />
+          {/* Summary Cards */}
+          <section className="mb-6">
+            <SummaryCards />
           </section>
 
-          {/* Recent Transactions */}
-          <section>
-            <RecentTransactions />
-          </section>
-        </div>
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Budget Chart */}
+            <section>
+              <BudgetChart budgets={budgetDataArray} />
+            </section>
 
-        {/* Mobile Floating Button */}
-        <div className="sm:hidden">
-          <AddTransactionButton />
+            {/* Recent Transactions */}
+            <section>
+              <RecentTransactions transactions={transactionDataArray} />
+            </section>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+
+      {/* Mobile Navigation */}
+      <MobileNavigation />
+    </div>
   );
 }

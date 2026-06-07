@@ -6,89 +6,85 @@ import {
   Coffee,
   Home,
   Car,
-  Utensils,
   Briefcase,
+  Tag,
+  Gift,
+  TrendingUp,
+  HeartPulse,
+  Plane,
+  Gamepad2,
+  Users,
+  GraduationCap,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
+import Link from "next/link";
 
-interface Transaction {
+interface TransactionData {
   id: string;
-  name: string;
-  category: string;
-  date: string;
+  title: string;
   amount: number;
-  type: "income" | "expense";
-  icon: LucideIcon;
+  type: "INCOME" | "EXPENSE";
+  date: string;
+  category?: {
+    name: string;
+    color: string;
+  };
 }
 
-const transactions: Transaction[] = [
-  {
-    id: "1",
-    name: "Salary Deposit",
-    category: "Income",
-    date: "Today",
-    amount: 5240.0,
-    type: "income",
-    icon: Briefcase,
-  },
-  {
-    id: "2",
-    name: "Rent Payment",
-    category: "Housing",
-    date: "Yesterday",
-    amount: -1200.0,
-    type: "expense",
-    icon: Home,
-  },
-  {
-    id: "3",
-    name: "Coffee Shop",
-    category: "Food & Dining",
-    date: "Apr 22",
-    amount: -8.5,
-    type: "expense",
-    icon: Coffee,
-  },
-  {
-    id: "4",
-    name: "Grocery Store",
-    category: "Shopping",
-    date: "Apr 21",
-    amount: -156.8,
-    type: "expense",
-    icon: ShoppingBag,
-  },
-  {
-    id: "5",
-    name: "Gas Station",
-    category: "Transportation",
-    date: "Apr 20",
-    amount: -48.0,
-    type: "expense",
-    icon: Car,
-  },
-];
+interface RecentTransactionsProps {
+  transactions?: TransactionData[];
+}
 
-function TransactionItem({ transaction }: { transaction: Transaction }) {
-  const Icon = transaction.icon;
-  const isIncome = transaction.type === "income";
+const getCategoryIcon = (categoryName?: string): LucideIcon => {
+  if (!categoryName) return Tag;
+  const name = categoryName.toLowerCase();
+  if (name.includes("food") || name.includes("drink")) return Coffee;
+  if (name.includes("transport")) return Car;
+  if (name.includes("house") || name.includes("bill")) return Home;
+  if (name.includes("shop")) return ShoppingBag;
+  if (name.includes("gift")) return Gift;
+  if (name.includes("invest")) return TrendingUp;
+  if (name.includes("health")) return HeartPulse;
+  if (name.includes("travel")) return Plane;
+  if (name.includes("entertain")) return Gamepad2;
+  if (name.includes("family")) return Users;
+  if (name.includes("education")) return GraduationCap;
+  if (name.includes("business")) return Briefcase;
+  if (name.includes("salary") || name.includes("income")) return Wallet;
+  return Tag;
+};
+
+function TransactionItem({ transaction }: { transaction: TransactionData }) {
+  const isIncome = transaction.type === "INCOME";
+  const categoryName = transaction.category?.name || "Uncategorized";
+
+  const categoryColor =
+    transaction.category?.color || (isIncome ? "#6B9B7A" : "#64748b");
+  const Icon = getCategoryIcon(categoryName);
+
+  const formattedDate = new Date(transaction.date).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 
   return (
     <div className="flex items-center gap-4 py-3">
       <div
-        className={`flex-shrink-0 p-2.5 rounded-xl ${
-          isIncome
-            ? "bg-[#E8F5E9] text-[#6B9B7A]"
-            : "bg-slate-100 text-slate-500"
-        }`}
+        className="flex-shrink-0 p-2.5 rounded-xl"
+        style={{
+          backgroundColor: isIncome ? "#E8F5E9" : `${categoryColor}20`,
+          color: isIncome ? "#6B9B7A" : categoryColor,
+        }}
       >
         <Icon className="h-4 w-4" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-foreground truncate">
-          {transaction.name}
+          {transaction.title}
         </p>
-        <p className="text-xs text-muted-foreground">{transaction.category}</p>
+        <p className="text-xs text-muted-foreground">{categoryName}</p>
       </div>
       <div className="text-right">
         <p
@@ -96,33 +92,46 @@ function TransactionItem({ transaction }: { transaction: Transaction }) {
             isIncome ? "text-[#6B9B7A]" : "text-[#E57373]"
           }`}
         >
-          {isIncome ? "+" : ""}${Math.abs(transaction.amount).toFixed(2)}
+          {isIncome ? "+" : "-"}฿{Math.abs(transaction.amount).toLocaleString()}
         </p>
-        <p className="text-xs text-muted-foreground">{transaction.date}</p>
+        <p className="text-xs text-muted-foreground">{formattedDate}</p>
       </div>
     </div>
   );
 }
 
-export function RecentTransactions() {
+export function RecentTransactions({
+  transactions = [],
+}: RecentTransactionsProps) {
+  const recentList = transactions.slice(0, 5);
+
   return (
-    <Card className="border-0 shadow-sm">
+    <Card className="border-0 shadow-sm h-full">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-medium text-foreground">
             Recent Transactions
           </CardTitle>
-          <button className="text-sm text-[#6B9B7A] hover:text-[#5a8a69] font-medium transition-colors hover:bg-[#E8F5E9] rounded-md px-2 py-1">
+          <Link
+            href="/transactions"
+            className="text-sm text-[#6B9B7A] hover:text-[#5a8a69] font-medium transition-colors hover:bg-[#E8F5E9] rounded-md px-2 py-1"
+          >
             View All
-          </button>
+          </Link>
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="divide-y divide-border">
-          {transactions.map((transaction) => (
-            <TransactionItem key={transaction.id} transaction={transaction} />
-          ))}
-        </div>
+        {recentList.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <p className="text-sm text-muted-foreground">No transactions yet</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {recentList.map((transaction) => (
+              <TransactionItem key={transaction.id} transaction={transaction} />
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
