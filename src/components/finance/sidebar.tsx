@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Receipt, PiggyBank, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUserProfile } from "@/hooks/useProfile";
 
 const navItems = [
   {
@@ -28,8 +29,11 @@ interface SidebarProfileProps {
   email?: string;
 }
 
-export function Sidebar({ name, email }: SidebarProfileProps) {
+export function Sidebar() {
   const pathname = usePathname();
+  const { data: userProfile } = useUserProfile();
+  const name = userProfile?.name || "User";
+  const email = userProfile?.email || "user@example.com";
 
   return (
     <aside className="hidden md:flex md:flex-col md:w-52 md:fixed md:inset-y-0 bg-white border-r border-border">

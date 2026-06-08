@@ -1,7 +1,10 @@
+"use client";
+
 import { PageHeader } from "@/components/finance/page-header";
 import { SummaryCards } from "@/components/finance/summary-cards";
 import { ManageBudgets } from "@/components/finance/manage-budgets";
 import { Sidebar, MobileNavigation } from "@/components/finance/sidebar";
+import { useUserProfile } from "@/hooks/useProfile";
 
 export default function BudgetsPage() {
   return (

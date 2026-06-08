@@ -15,9 +15,6 @@ export default function FinanceDashboard() {
     useTransactions();
   const budgetDataArray = response || [];
   const transactionDataArray = transactionResponse || [];
-  const { data: userProfile } = useUserProfile();
-  const name = userProfile?.name || "User";
-  const email = userProfile?.email || "user@example.com";
 
   if (isLoading) return <div>Generating chart...</div>;
   if (error) return <div>An error occurred while loading data</div>;
@@ -25,12 +22,12 @@ export default function FinanceDashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Sidebar */}
-      <Sidebar name={name} email={email} />
+      <Sidebar />
 
       {/* Main Content */}
       <main className="md:pl-52">
         <div className="max-w-6xl mx-auto px-4 py-6 md:px-6 md:py-8 pb-24 md:pb-8">
-          <PageHeader name={name} />
+          <PageHeader />
 
           {/* Summary Cards */}
           <section className="mb-6">

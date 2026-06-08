@@ -3,16 +3,13 @@
 import { Bell, Settings, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddTransactionButton } from "./add-transaction-button";
+import { useUserProfile } from "@/hooks/useProfile";
 
 interface PageHeaderProps {
   showAddButton?: boolean;
-  name?: string;
 }
 
-export function PageHeader({
-  showAddButton = true,
-  name = "User",
-}: PageHeaderProps) {
+export function PageHeader({ showAddButton = true }: PageHeaderProps) {
   const currentDate = new Date();
   const greeting = getGreeting();
   const formattedDate = currentDate.toLocaleDateString("en-US", {
@@ -27,6 +24,8 @@ export function PageHeader({
     if (hour < 18) return "Good afternoon";
     return "Good evening";
   }
+  const { data: userProfile } = useUserProfile();
+  const name = userProfile?.name || "User";
 
   return (
     <header className="pb-6">
