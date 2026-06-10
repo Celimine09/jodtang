@@ -46,6 +46,7 @@ interface BudgetData {
   spent: number;
   remaining: number;
   usagePercentage: number;
+  isAutoRenew: boolean;
 }
 
 const getCategoryIcon = (categoryName?: string): LucideIcon => {
@@ -68,10 +69,12 @@ const getCategoryIcon = (categoryName?: string): LucideIcon => {
   return Tag;
 };
 
-// 🌟 อัปเดตคอมโพเนนต์ Card ให้มี Modal สำหรับแก้ไข
 function BudgetCategoryCard({ budget }: { budget: BudgetData }) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editAmount, setEditAmount] = useState(budget.amount.toString());
+  const [editIsAutoRenew, setEditIsAutoRenew] = useState(
+    Boolean(budget.isAutoRenew),
+  );
   const queryClient = useQueryClient();
 
   const Icon = getCategoryIcon(budget.categoryName);
@@ -85,19 +88,15 @@ function BudgetCategoryCard({ budget }: { budget: BudgetData }) {
     return "bg-[#6B9B7A]";
   };
 
-  // 🌟 Mutation สำหรับการอัปเดตข้อมูล
   const updateMutation = useMutation({
-    mutationFn: (newAmount: number) =>
-      budgetService.updateBudget(budget.id, { amount: newAmount }),
+    mutationFn: (data: { amount: number; isAutoRenew: boolean }) =>
+      budgetService.updateBudget(budget.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
       setIsEditDialogOpen(false);
     },
     onError: (error: any) => {
-      alert(
-        error.response?.data?.message ||
-          "Failed to update budget. Please try again.",
-      );
+      alert(error.response?.data?.message || "Failed to update budget.");
     },
   });
 
@@ -106,11 +105,20 @@ function BudgetCategoryCard({ budget }: { budget: BudgetData }) {
       alert("Please enter a valid amount");
       return;
     }
-    updateMutation.mutate(Number(editAmount));
+    updateMutation.mutate({
+      amount: Number(editAmount),
+      isAutoRenew: editIsAutoRenew,
+    });
   };
 
   return (
-    <div className="p-4 rounded-xl border border-border/50 bg-white hover:shadow-sm transition-shadow">
+    <div className="p-4 rounded-xl border border-border/50 bg-white hover:shadow-sm transition-shadow relative">
+      {budget.isAutoRenew && (
+        <div className="absolute top-2 right-12 bg-blue-50 text-blue-600 text-[10px] px-2 py-0.5 rounded-full font-medium flex items-center gap-1 border border-blue-100">
+          <TrendingUp className="h-3 w-3" /> Auto
+        </div>
+      )}
+
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
           <div
@@ -133,14 +141,16 @@ function BudgetCategoryCard({ budget }: { budget: BudgetData }) {
           </div>
         </div>
 
-        {/* 🌟 ซ่อนปุ่มดินสอไว้ใน DialogTrigger */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
-              onClick={() => setEditAmount(budget.amount.toString())} // รีเซ็ตค่าให้ตรงกับปัจจุบันทุกครั้งที่กดเปิด
+              onClick={() => {
+                setEditAmount(budget.amount.toString());
+                setEditIsAutoRenew(Boolean(budget.isAutoRenew));
+              }}
             >
               <Pencil className="h-4 w-4" />
             </Button>
@@ -148,7 +158,7 @@ function BudgetCategoryCard({ budget }: { budget: BudgetData }) {
           <DialogContent className="sm:max-w-md rounded-2xl">
             <DialogHeader>
               <DialogTitle className="text-lg font-medium">
-                Edit Budget for {budget.categoryName}
+                Edit Budget
               </DialogTitle>
             </DialogHeader>
 
@@ -165,10 +175,29 @@ function BudgetCategoryCard({ budget }: { budget: BudgetData }) {
                     type="number"
                     value={editAmount}
                     onChange={(e) => setEditAmount(e.target.value)}
-                    placeholder="0.00"
-                    className="w-full pl-8 pr-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#6B9B7A] focus:border-transparent transition-all"
+                    className="w-full pl-8 pr-4 py-3 rounded-xl border border-border bg-background focus:ring-2 focus:ring-[#6B9B7A] outline-none"
                   />
                 </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3.5 mt-2 bg-slate-50 rounded-xl border border-border">
+                <div>
+                  <h4 className="text-sm font-medium text-foreground">
+                    Auto-renew Budget
+                  </h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Automatically recreate next month
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={editIsAutoRenew}
+                    onChange={(e) => setEditIsAutoRenew(e.target.checked)}
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#6B9B7A]"></div>
+                </label>
               </div>
 
               <Button
@@ -202,8 +231,8 @@ function BudgetCategoryCard({ budget }: { budget: BudgetData }) {
             className={`text-xs font-medium ${isOverBudget ? "text-[#E57373]" : "text-[#6B9B7A]"}`}
           >
             {isOverBudget
-              ? `฿${Math.abs(budget.remaining).toLocaleString()} over budget`
-              : `฿${budget.remaining.toLocaleString()} remaining`}
+              ? `฿${Math.abs(budget.remaining).toLocaleString()} over`
+              : `฿${budget.remaining.toLocaleString()} left`}
           </span>
         </div>
       </div>
@@ -292,12 +321,13 @@ export function ManageBudgets() {
   const [selectedPeriod, setSelectedPeriod] = useState(
     new Date().toISOString().slice(0, 7),
   );
-
   const [categoryId, setCategoryId] = useState("");
   const [amount, setAmount] = useState("");
   const [formPeriod, setFormPeriod] = useState(
     new Date().toISOString().slice(0, 7),
   );
+
+  const [isAutoRenew, setIsAutoRenew] = useState(false);
 
   const { data: response, isLoading } = useBudgets(selectedPeriod);
   const budgets: BudgetData[] = response || [];
@@ -312,17 +342,14 @@ export function ManageBudgets() {
     mutationFn: budgetService.createBudget,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
-
       setCategoryId("");
       setAmount("");
       setFormPeriod(new Date().toISOString().slice(0, 7));
+      setIsAutoRenew(false);
       setIsDialogOpen(false);
     },
     onError: (error: any) => {
-      alert(
-        error.response?.data?.message ||
-          "failed to create budget. Please try again.",
-      );
+      alert(error.response?.data?.message || "Failed to create budget.");
     },
   });
 
@@ -335,6 +362,7 @@ export function ManageBudgets() {
       categoryId,
       amount: Number(amount),
       period: formPeriod,
+      isAutoRenew,
     });
   };
 
@@ -351,7 +379,7 @@ export function ManageBudgets() {
               type="month"
               value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="px-4 py-2 text-sm font-medium rounded-xl border border-border bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-[#6B9B7A] cursor-pointer"
+              className="px-4 py-2 text-sm font-medium rounded-xl border border-border bg-white outline-none focus:ring-2 focus:ring-[#6B9B7A]"
             />
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -377,7 +405,7 @@ export function ManageBudgets() {
                       value={categoryId}
                       onChange={(e) => setCategoryId(e.target.value)}
                       disabled={isLoadingCategories}
-                      className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#6B9B7A] focus:border-transparent transition-all appearance-none cursor-pointer"
+                      className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:ring-2 focus:ring-[#6B9B7A] outline-none appearance-none"
                     >
                       <option value="">
                         {isLoadingCategories ? "Loading..." : "Select category"}
@@ -403,7 +431,7 @@ export function ManageBudgets() {
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         placeholder="0.00"
-                        className="w-full pl-8 pr-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#6B9B7A] focus:border-transparent transition-all"
+                        className="w-full pl-8 pr-4 py-3 rounded-xl border border-border bg-background focus:ring-2 focus:ring-[#6B9B7A] outline-none"
                       />
                     </div>
                   </div>
@@ -416,8 +444,28 @@ export function ManageBudgets() {
                       type="month"
                       value={formPeriod}
                       onChange={(e) => setFormPeriod(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#6B9B7A] focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:ring-2 focus:ring-[#6B9B7A] outline-none"
                     />
+                  </div>
+
+                  <div className="flex items-center justify-between p-3.5 mt-2 bg-slate-50 rounded-xl border border-border">
+                    <div>
+                      <h4 className="text-sm font-medium text-foreground">
+                        Auto-renew Budget
+                      </h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Automatically recreate next month
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={isAutoRenew}
+                        onChange={(e) => setIsAutoRenew(e.target.checked)}
+                      />
+                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#6B9B7A]"></div>
+                    </label>
                   </div>
 
                   <Button

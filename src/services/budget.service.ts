@@ -11,13 +11,17 @@ export const budgetService = {
     categoryId: string;
     amount: number;
     period: string;
+    isAutoRenew?: boolean;
   }) => {
     const response = await api.post("/budgets", data);
     return response.data;
   },
 
-  updateBudget: async (id: string, data: { amount: number }) => {
-    const response = await api.put(`/budgets/${id}`, data);
+  updateBudget: async (
+    id: string,
+    data: { amount?: number; isAutoRenew?: boolean },
+  ) => {
+    const response = await api.patch(`/budgets/${id}`, data);
     return response.data;
   },
 };

@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Receipt, PiggyBank, Wallet } from "lucide-react";
+import {
+  LayoutDashboard,
+  Receipt,
+  PiggyBank,
+  Wallet,
+  CalendarClock,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserProfile } from "@/hooks/useProfile";
 
@@ -21,6 +27,11 @@ const navItems = [
     label: "Budgets",
     href: "/budgets",
     icon: PiggyBank,
+  },
+  {
+    label: "Subscriptions",
+    href: "/subscriptions",
+    icon: CalendarClock,
   },
 ];
 
