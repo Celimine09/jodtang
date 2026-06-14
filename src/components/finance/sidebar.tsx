@@ -45,6 +45,12 @@ export function Sidebar() {
   const { data: userProfile } = useUserProfile();
   const name = userProfile?.name || "User";
   const email = userProfile?.email || "user@example.com";
+  const { data: user } = useUserProfile();
+  const userInitial = user?.name
+    ? user.name.charAt(0).toUpperCase()
+    : user?.email
+      ? user.email.charAt(0).toUpperCase()
+      : "U";
 
   return (
     <aside className="hidden md:flex md:flex-col md:w-52 md:fixed md:inset-y-0 bg-white border-r border-border">
@@ -88,7 +94,9 @@ export function Sidebar() {
       <div className="px-3 py-3 border-t border-border">
         <div className="flex items-center gap-2.5 px-3 py-2">
           <div className="w-8 h-8 rounded-full bg-[#E8F5E9] flex items-center justify-center">
-            <span className="text-xs font-medium text-[#6B9B7A]">A</span>
+            <span className="text-xs font-medium text-[#6B9B7A]">
+              {userInitial}
+            </span>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground truncate">

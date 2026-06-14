@@ -1,9 +1,10 @@
 "use client";
 
-import { Bell, Settings, Plus } from "lucide-react";
+import { Bell, Settings, Plus, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddTransactionButton } from "./add-transaction-button";
 import { useUserProfile } from "@/hooks/useProfile";
+import { useLogout } from "@/hooks/useAuth";
 
 interface PageHeaderProps {
   showAddButton?: boolean;
@@ -26,6 +27,7 @@ export function PageHeader({ showAddButton = true }: PageHeaderProps) {
   }
   const { data: userProfile } = useUserProfile();
   const name = userProfile?.name || "User";
+  const logoutMutation = useLogout();
 
   return (
     <header className="pb-6">
@@ -40,21 +42,22 @@ export function PageHeader({ showAddButton = true }: PageHeaderProps) {
         </div>
         <div className="flex items-center gap-3">
           {showAddButton && <AddTransactionButton />}
-          <Button
+          {/* <Button
             variant="ghost"
             size="icon"
             className="rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted"
           >
             <Bell className="h-5 w-5" />
             <span className="sr-only">Notifications</span>
-          </Button>
+          </Button> */}
           <Button
             variant="ghost"
-            size="icon"
-            className="rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted"
+            onClick={() => logoutMutation.mutate()}
+            disabled={logoutMutation.isPending}
+            className="text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors gap-2 px-3"
           >
-            <Settings className="h-5 w-5" />
-            <span className="sr-only">Settings</span>
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline-block font-medium">Logout</span>
           </Button>
         </div>
       </div>
