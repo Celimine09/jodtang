@@ -185,12 +185,12 @@ export function AuthForm() {
               </div>
               {isSignIn && (
                 <div className="flex justify-end mt-2">
-                  <button
+                  {/* <button
                     type="button"
                     className="text-xs font-medium text-[#6B9B7A] hover:text-[#5a8a69] transition-colors"
                   >
                     Forgot password?
-                  </button>
+                  </button> */}
                 </div>
               )}
 
